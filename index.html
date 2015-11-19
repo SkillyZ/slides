@@ -1,70 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
 	<meta charset="utf-8">
 	
 	<title>Slides, A Slideshow Plugin for jQuery</title>
 	
 	<style type="text/css" media="screen">
-		/*
-			Load CSS before JavaScript
-		*/
-		
-		/*
-			Slides container
-			Important:
-			Set the width of your slides container
-			Set to display none, prevents content flash
-		*/
 		.slides_container {
 			width:470px;
 			margin: 0 auto;
 			/* display:none; */
 		}
-
-		/*
-			Each slide
-			Important:
-			Set the width of your slides
-			If height not specified height will be set by the slide content
-			Set to display block
-		*/
+	
 		.slides_container div {
 			width:470px;
 			height:170px;
 			display:block;
 		}
 		
-		/*
-			Optional:
-			Reset list default style
-		*/
 		.pagination {
 			list-style:none;
 			margin:0;
 			padding:0;
 		}
-
-		/*
-			Optional:
-			Show the current slide in the pagination
-		*/
+		
 		.pagination .current a {
 			color:red;
 		}
 	</style>
 	
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-	<script src="js/slides.min.jquery.js"></script>
 	
-	<script>
-		/*$(function(){
-			$('#slides').slides({
-				preload: true,
-				generateNextPrev: true
-			});
-		});*/
-	</script>
 </head>
 <body>
 	<div id="slides">
@@ -91,6 +56,7 @@
 </html>
 
 
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script type="text/javascript">
 
 
@@ -99,16 +65,17 @@
 		var Slides = function (ele, opt){
 			this.$element = ele,
 			this.defaults = {
-				container: 'slides_container',
-				paginationClass: 'pagination',
-				speed:'350',
-				effect:'slide',
-				currentClass: 'current',
-				generateNextPrev: false,
-				next: 'next',
-				prev: 'prev',
-				timeout:5000,
-				auto: true
+				container: 'slides_container',//包裹轮播元素class
+				paginationClass: 'pagination',//分页
+				speed:'350',//速度
+				effect:'slide',//特效类型
+				currentClass: 'current',//分页当前class
+				generateNextPrev: false,//是否生成下一页下一页
+				generatePagination: true,//是否生成分页
+				next: 'next',//下一页class
+				prev: 'prev',//上一页class
+				timeout:5000,//轮播时间
+				auto: true//是否轮播
 			},
 
 			this.options = $.extend({}, this.defaults, opt)
@@ -118,14 +85,13 @@
 		Slides.prototype = {
 			slides : function(){
 
-
+				//初始化腹肌div
 				$('.'+this.options.container, this.$element).css({
 				overflow : 'hidden',
 				position : 'relative',
 				display : 'block'
-				}).children().wrapAll('<div class="slides_control"/>'),
-				$('.'+this.options.container, this.$element).after('<a href="#" class="next" >Next</a>'),
-				$('.'+this.options.container, this.$element).after('<a href="#" class="prev" >Prev</a>');
+				}).children().wrapAll('<div class="slides_control"/>');
+
 
 				var elem = $(this),
 					ele = this.$element,
@@ -134,10 +100,38 @@
 					width = control.children().outerWidth(),
 					height = control.children().outerHeight(),
 					options = this.options,
-					start = 0,
-					next = 0, prev = 0, number = 0, current = 0, clicked, position, direction;
+					start = 0, next = 0, prev = 0, number = 0, current = 0, clicked, position, direction, pauseTimeout;
 
+				//生成分页
+				if(options.generatePagination){
+					$('.'+options.container, ele).after('<ul class="'+options.paginationClass+'"></ul>');
+
+					control.children().each(function(index, element){
+
+						number++;
+						$('.'+options.paginationClass, ele).append('<li><a href="#'+index+'">'+number+'</a></li>');
+
+					});
+
+					$('.'+options.paginationClass + ' li:eq('+ start +')', ele).eq(start).addClass(options.currentClass);
+
+					//继续绑定事件
+					$('.'+options.paginationClass).on('click', 'li', function(){
+						clicked = $(this).children().attr('href');
+						clicked = clicked.substr(1, clicked.length-1);
+						
+						animate('pagination', options.effect, clicked);
+					})
+
+				}
+
+				//生成上一页下一页
+				if(options.generateNextPrev){
+					$('.'+this.options.container, ele).after('<a href="#" class="next" >Next</a>'),
+					$('.'+this.options.container, ele).after('<a href="#" class="prev" >Prev</a>');
+				}
 				
+				//初始化control
 				control.css({
 					position : 'relative',
 					width : width*3,
@@ -145,7 +139,7 @@
 					left : -width
 				});
 
-
+				//初始化轮播元素
 				control.children().each(function(index, element){
 					if(index === start){
 						$(this).css({
@@ -166,16 +160,19 @@
 					}
 				});
 				
-
+				//绑定动作
 				$('.'+options.next, this.$element).click(function(){
-					animate('next');
+					animate('next', options.effect);
 				}),
 				$('.'+options.prev, this.$element).click(function(){
-					animate('prev');
+					animate('prev', options.effect);
 				});
 
-				
+						
+				//动画主要方法
 				function animate(direction, effect, clicked){
+
+					//判断动作类型
 					switch (direction) {
 						case 'next':
 							prev = current;
@@ -185,7 +182,6 @@
 							direction = width*2;
 
 							current = next;
-
 
 						break;
 						case 'prev':
@@ -199,15 +195,39 @@
 
 						break;
 						case 'pagination':
+							
+							next = parseInt(clicked,10);
+							//prev = $('.'+options.paginationClass +' li.'+options.currentClass + ' a', ele).attr('href').match('[^#/]+$');
+							prev = $('.'+options.paginationClass +' li.'+options.currentClass + ' a', ele).attr('href');
+							prev = prev.substr(1, prev.length-1);
 
+							console.log(prev);
+							if(next > prev){
+								position = -width*2;
+								direction = width*2;
+							}else{
+								position = 0;
+								direction = 0;
+							}
+
+							current = next;
 						break;
 					}
 
+					//轮播动画
+					if(options.auto){
+						clearTimeout(pauseTimeout);
+						pauseTimeout = setTimeout(function(){animate('next')}, options.timeout);
+					}
 
+					//确定下一页上一页之后动作
 					control.children().eq(current).css({
 						display:'block',
 						left:direction
 					});
+
+					$('.'+options.paginationClass +' li', ele).eq(prev).removeClass(options.currentClass);
+					$('.'+options.paginationClass +' li', ele).eq(next).addClass(options.currentClass);
 
 					control.animate({
 						left:position
@@ -223,10 +243,11 @@
 							left:width
 						});
 
+
 					});
 
-					if(options.auto)
-						setTimeout(function(){animate('next')}, options.timeout);
+
+					
 				}
 
 				if(options.auto)
@@ -247,14 +268,11 @@
 
 $(function(){
 	var options = {
-		container:'slides_container'
+		container:'slides_container',
+		generateNextPrev:true
 	}
 
 	$('#slides').slide(options);
-	/*$('.main-left-title').myPlugin({
-        'color': '#2C9929',
-        'fontSize': '20px',
-        'textDecoration': 'underline'
-    });*/
+	
 });
 </script>
