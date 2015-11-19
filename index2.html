@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	
+	<title>Slides, A Slideshow Plugin for jQuery</title>
+	
+	<style type="text/css" media="screen">
+		/*
+			Load CSS before JavaScript
+		*/
+		
+		/*
+			Slides container
+			Important:
+			Set the width of your slides container
+			Set to display none, prevents content flash
+		*/
+		.slides_container {
+			width:470px;
+			margin: 0 auto;
+			/* display:none; */
+		}
+
+		/*
+			Each slide
+			Important:
+			Set the width of your slides
+			If height not specified height will be set by the slide content
+			Set to display block
+		*/
+		.slides_container div {
+			width:470px;
+			height:170px;
+			display:block;
+		}
+		
+		/*
+			Optional:
+			Reset list default style
+		*/
+		.pagination {
+			list-style:none;
+			margin:0;
+			padding:0;
+		}
+
+		/*
+			Optional:
+			Show the current slide in the pagination
+		*/
+		.pagination .current a {
+			color:red;
+		}
+	</style>
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="js/slides.min.jquery.js"></script>
+	
+	<script>
+		/*$(function(){
+			$('#slides').slides({
+				preload: true,
+				generateNextPrev: true
+			});
+		});*/
+	</script>
+</head>
+<body>
+	<div id="slides">
+		<div class="slides_container">
+			<div>
+				<h1>Slide 1</h1>
+				<p>skilly写的第一个轮播插件,以后还会慢慢改进 希望大家喜欢。</p>
+			</div>
+			<div>
+				<h1>Slide 2</h1>
+				<p>skilly写的第一个轮播插件,以后还会慢慢改进 希望大家喜欢。</p>
+			</div>
+			<div>
+				<h1>Slide 3</h1>
+				<p>skilly写的第一个轮播插件,以后还会慢慢改进 希望大家喜欢。</p>
+			</div>
+			<div>
+				<h1>Slide 4</h1>
+				<p>skilly写的第一个轮播插件,以后还会慢慢改进 希望大家喜欢。</p>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+
+
+<script type="text/javascript">
+
+
+	;(function(){
+		//定义构造函数
+		var Slides = function (ele, opt){
+			this.$element = ele,
+			this.defaults = {
+				container: 'slides_container',
+				paginationClass: 'pagination',
+				speed:'350',
+				effect:'slide',
+				currentClass: 'current',
+				generateNextPrev: false,
+				next: 'next',
+				prev: 'prev',
+				timeout:5000,
+				auto: true
+			},
+
+			this.options = $.extend({}, this.defaults, opt)
+		}
+
+		//定义方法
+		Slides.prototype = {
+			slides : function(){
+
+
+				$('.'+this.options.container, this.$element).css({
+				overflow : 'hidden',
+				position : 'relative',
+				display : 'block'
+				}).children().wrapAll('<div class="slides_control"/>'),
+				$('.'+this.options.container, this.$element).after('<a href="#" class="next" >Next</a>'),
+				$('.'+this.options.container, this.$element).after('<a href="#" class="prev" >Prev</a>');
+
+				var elem = $(this),
+					ele = this.$element,
+					control = $('.slides_control', this.$element),
+					total = control.children().size(),
+					width = control.children().outerWidth(),
+					height = control.children().outerHeight(),
+					options = this.options,
+					start = 0,
+					next = 0, prev = 0, number = 0, current = 0, clicked, position, direction;
+
+				
+				control.css({
+					position : 'relative',
+					width : width*3,
+					height : height,
+					left : -width
+				});
+
+
+				control.children().each(function(index, element){
+					if(index === start){
+						$(this).css({
+							position : 'absolute',
+							width:width,
+							height:height,
+							left:width,
+							display:'block'
+						});
+					}else{
+						$(this).css({
+							position : 'absolute',
+							width:width,
+							height:height,
+							left:0,
+							display:'none'
+						});
+					}
+				});
+
+
+				$('.'+options.next, this.$element).click(function(){
+					animate('next');
+				}),
+				$('.'+options.prev, this.$element).click(function(){
+					animate('prev');
+				});
+
+				
+				function animate(direction, effect, clicked){
+					switch (direction) {
+						case 'next':
+							prev = current;
+							next = current + 1;
+							next = next === total ? 0 : next;
+							position = -width*2;
+							direction = width*2;
+
+							current = next;
+
+
+						break;
+						case 'prev':
+							prev = current;
+							next = current - 1;
+							next = next === -1 ? total-1 : next;
+							position = 0;
+							direction = 0;
+
+							current = next;
+
+						break;
+						case 'pagination':
+
+						break;
+					}
+
+
+					control.children().eq(current).css({
+						display:'block',
+						left:direction
+					});
+
+					control.animate({
+						left:position
+					},options.speed, function(){
+						control.children().eq(prev).css({
+							display:'none',
+							left:0
+						}),
+						control.css({
+							left:-width
+						}),
+						control.children().eq(current).css({
+							left:width
+						});
+
+					});
+
+					if(options.auto)
+						setTimeout(function(){animate('next')}, options.timeout);
+				}
+
+				if(options.auto)
+					setTimeout(function(){animate('next')}, options.timeout);
+
+
+				
+			}
+		}
+
+		//在插件里使用轮播对象
+		$.fn.slide = function(options){
+			//创建对象
+			var sl = new Slides(this, options);
+
+			return sl.slides();
+		}
+	})();
+
+$(function(){
+	var options = {
+		container:'slides_container'
+	}
+
+	$('#slides').slide(options);
+	/*$('.main-left-title').myPlugin({
+        'color': '#2C9929',
+        'fontSize': '20px',
+        'textDecoration': 'underline'
+    });*/
+});
+</script>
