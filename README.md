@@ -14,7 +14,7 @@ timeout:5000,//轮播时间<br>
 auto: true//是否轮播<br>
 
 # 用法
-在需要轮播的外层直接调用slide然后闯入参数 如<br>
+在需要轮播的外层直接调用slide然后传入参数 如<br>
 
 $('#slides').slide(options);<br>
 
