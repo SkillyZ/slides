@@ -7,7 +7,7 @@
 				container: 'slides_container',//包裹轮播元素class
 				paginationClass: 'pagination',//分页
 				speed:'350',//速度
-				effect:'slide',//特效类型
+				effect:'slide',//特效类型 fade渐隐 slide滑动
 				currentClass: 'current',//分页当前class
 				generateNextPrev: false,//是否生成下一页下一页
 				generatePagination: true,//是否生成分页
@@ -24,7 +24,7 @@
 		Slides.prototype = {
 			slides : function(){
 
-				//初始化腹肌div
+				//初始化父级div
 				$('.'+this.options.container, this.$element).css({
 				overflow : 'hidden',
 				position : 'relative',
@@ -86,7 +86,8 @@
 							width:width,
 							height:height,
 							left:width,
-							display:'block'
+							display:'block',
+							opacity:1
 						});
 					}else{
 						$(this).css({
@@ -94,7 +95,8 @@
 							width:width,
 							height:height,
 							left:0,
-							display:'none'
+							display:'none',
+							opacity:0
 						});
 					}
 				});
@@ -153,44 +155,70 @@
 						break;
 					}
 
-					//轮播动画
+
 					if(options.auto){
 						clearTimeout(pauseTimeout);
-						pauseTimeout = setTimeout(function(){animate('next')}, options.timeout);
+						pauseTimeout = setTimeout(function(){animate('next', options.effect)}, options.timeout);
 					}
 
-					//确定下一页上一页之后动作
-					control.children().eq(current).css({
-						display:'block',
-						left:direction
-					});
+					
+					if(effect == 'fade'){
+						//渐隐
 
-					$('.'+options.paginationClass +' li', ele).eq(prev).removeClass(options.currentClass);
-					$('.'+options.paginationClass +' li', ele).eq(next).addClass(options.currentClass);
+						$('.'+options.paginationClass +' li', ele).eq(prev).removeClass(options.currentClass);
+						$('.'+options.paginationClass +' li', ele).eq(next).addClass(options.currentClass);
 
-					control.animate({
-						left:position
-					},options.speed, function(){
-						control.children().eq(prev).css({
-							display:'none',
-							left:0
-						}),
-						control.css({
-							left:-width
-						}),
-						control.children().eq(current).css({
-							left:width
+						control.children().eq(prev).animate({
+							opacity:0
+						}, options.speed, function(){
+							control.children().eq(prev).css({
+								display:'none'
+							});
+							control.children().eq(next).css({
+								display:'block',
+								left:width
+							}).animate({
+								opacity:1
+							}, options.speed);
+
 						});
 
+					}else{
+						//轮播动画
+						
+						//确定下一页上一页之后动作
+						control.children().eq(current).css({
+							display:'block',
+							left:direction
+						});
 
-					});
+						$('.'+options.paginationClass +' li', ele).eq(prev).removeClass(options.currentClass);
+						$('.'+options.paginationClass +' li', ele).eq(next).addClass(options.currentClass);
+
+						control.animate({
+							left:position
+						},options.speed, function(){
+							control.children().eq(prev).css({
+								display:'none',
+								left:0
+							}),
+							control.css({
+								left:-width
+							}),
+							control.children().eq(current).css({
+								left:width
+							});
+
+						});
+					}
+					
 
 
 					
 				}
 
 				if(options.auto)
-					setTimeout(function(){animate('next')}, options.timeout);
+					setTimeout(function(){animate('next', options.effect)}, options.timeout);
 
 				
 			}
